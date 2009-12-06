@@ -4,14 +4,14 @@
  * 	"celebratory_object": {
  * 		class: "Confetti",
  * 		args: [], // optional, constructor arguments
- * 		type: "clone", // singleton or clone
+ * 		type: "prototype", // singleton or prototype
  *		props: { // properties -- variables and methods to set
  *			"color": "red", // sets your_object.color = "red"
  *			"quantity()": 20 // calls your_object.setQuantity(20) 
  *		}
  * 	},
  * 	"censor_function": {
- * 		function: "SimpleCensor",
+ * 		function: "SimpleCensor", // functions are always singletons
  * 		args: ["_", ['darn', 'dang', 'fudge', 'phooie']] // _ arguments will be merged into this
  * 	}
  * });
@@ -35,7 +35,7 @@
     
     var Specifications = {};
 
-	// Clear out everything -- this was added to make singleton test cases work after multiple runs	
+	// Clear out everything -- this was added to help singleton test cases work after multiple runs	
 	LNL.reset = function(){
 		Specifications = {};
 		ObjectDatabase = {}; 
@@ -48,36 +48,48 @@
     };
     
     var SPEC_TYPE = {
-        SINGLETON: "singleton",
-        PROTOTYPE: "prototype",
+        CLASS: "class",
 		FUNCTION: "function"
     }
+	
+	var SPEC_LIFECYCLE = {
+		SINGLETON: "singleton",
+		PROTOTYPE: "prototype"
+	}
     
-    var getType = function(object){
-		for(type in SPEC_TYPE){
-			var value = SPEC_TYPE[type];
-			if(object[value] || object.type == value){
+    function getLifecycle(object){
+		for(type in SPEC_LIFECYCLE){
+			var value = SPEC_LIFECYCLE[type];
+			if(object.lifecycle == value){
 				return value;
 			}
 		}
 		return null;
     }
+	
+	function getType(spec){
+		for(type in SPEC_TYPE){
+			var value = SPEC_TYPE[type];
+			if(spec[value]){
+				return SPEC_TYPE[type];
+			}
+		}
+		return null;
+	}
     
-    var getConstructor = function(cons){
+    function getConstructor(cons){
         switch (typeof(cons)) {
             case "function":
                 return cons;
-                break;
             case "string":
                 return eval(cons);
-                break;
             default:
                 return null;
         }
     }
 	
 	// array1: [_, hello, _, day!], array2: [oh, good]; #=> ['oh', 'hello', 'good', 'day!']
-	function fuseArrays(array1, array2){
+	function weaveArrays(array1, array2){
 		var ret = [];
 		for(var i = 0, j = 0, l_i = array1.length, l_j = array2.length; i < l_i; i++){
 			if(array1[i] == "_"){
@@ -93,50 +105,82 @@
 		return ret;
 	}
 	
-	function instantiateObject(id, group){
+	function getSpec(id, group){
+        try {
+            return Specifications[group][id];
+        } 
+        catch (e) {
+			throw new Error("LNL: " + group + "#" + id + " specification not found");
+			throwError("specification not found", id, group);
+        }
+	}
+	
+	function applyConstructor(slate, spec){
+		var constructor = spec['class'];
+        if (typeof(constructor) == "string") {
+            constructor = spec['class'] = eval(constructor);
+        }
+		
+		var constructor_args = spec.args ? spec.args : [];
+		constructor.prototype.constructor.apply(slate, constructor_args);		
+	}
+	
+	function throwError(message, id, group){
+		var errorMessage = ["LNL: "];
+		var spec = false;
+		if(id){
+			errorMessage.push(id);
+			spec = true;
+			
+			if(group && group != DEFAULT_GROUP){
+				errorMessage.push(" in ");
+				errorMessage.push(group);
+			}
+			errorMessage.push(": ");
+		}
+		errorMessage.push(message);
+		throw new Error(errorMessage.join(""));
+	}
+	
+	function applyProperties(slate, spec){
+		for (var setter in spec.props) {
+        	var isMethod = setter.indexOf("()") == setter.length - 2;
+			if(isMethod){
+				var method_name = setter.slice(0, -2);
+				method_name = "set" + method_name[0].toUpperCase() + method_name.slice(1);
+				var method = slate[method_name];
+				if(!method){
+					throwError("does not have method " + method_name, id, group);
+				}
+				var args = spec.props[setter];
+				if(typeof(args) == "string"){
+					args = [args];
+				}
+				method.call(slate, args);
+			} else {
+				slate[setter] = spec.props[setter];
+			}
+        }
+	}
+	
+	function instantiate(id, group){
 		if (!group) 
             group = DEFAULT_GROUP;
         var ret = null;
 		
-		var obj;
-        try {
-            obj = Specifications[group][id];
-        } 
-        catch (e) {
-            throw e;
-        }
+		var obj = getSpec(id, group);
 		
 		// If we found a specification for the object
         if (obj) {
 			// And that specification is for a Class object
             if (obj['class']) {
-                var constructor = obj['class'];
-                if (typeof(constructor) == "string") {
-                    constructor = obj['class'] = eval(constructor);
-                }
+                
                 var slate = new EmptyClass();
                 
-                var constructor_args = obj.args ? obj.args : [];
-                constructor.prototype.constructor.apply(slate, constructor_args);
+				applyConstructor(slate, obj);
                 
-                for (var setter in obj.props) {
-                	var isMethod = setter.indexOf("()") == setter.length - 2;
-					if(isMethod){
-						var method_name = setter.slice(0, -2);
-						method_name = "set" + method_name[0].toUpperCase() + method_name.slice(1);
-						var method = slate[method_name];
-						if(!method){
-							throw new Error(group + "#" + id + " does not have method " + method_name)
-						}
-						var args = obj.props[setter];
-						if(typeof(args) == "string"){
-							args = [args];
-						}
-						method.call(slate, args);
-					} else {
-						slate[setter] = obj.props[setter];
-					}
-                }
+				// TODO refactor into an applyProperties(slate, spec) method
+                applyProperties(slate, obj);
                 
                 return slate;
             } 
@@ -149,7 +193,7 @@
 				if(obj.args){
 					var orig_func = func;
 					func = function(){
-						var args = fuseArrays(obj.args, arguments);
+						var args = weaveArrays(obj.args, arguments);
 						return orig_func.apply(this, args);
 						
 					}
@@ -160,13 +204,22 @@
 		return null;
 	}
     
+	/**
+	 * Private function for retrieving a particular object from the internal
+	 * object database.  One instance of the object is acquired and put into
+	 * the database and kept.  When requested, the same instance is always
+	 * returned.
+	 * @param {Object} id
+	 * @param {Object} group
+	 */
     function fetchFromDB(id, group){
-        if (!group) 
+        if (!group){
             group = DEFAULT_GROUP;
+		}
         var obj = null;
 		
 		if(ObjectDatabase[group] == null || ObjectDatabase[group][id] == null){
-			obj = instantiateObject(id, group);
+			obj = instantiate(id, group);
 			if(obj){
 				if (ObjectDatabase[group] == null) {
 					ObjectDatabase[group] = {};
@@ -182,21 +235,25 @@
 		}
     }
     
+	/**
+	 * This is the main function that you'll be interacting with.
+	 * Pass in the ID of the object you want, and optionally the group
+	 * associated with the object (when its specification was loaded).
+	 * @param {String} id identifier for the particular instance you want 
+	 * @param {String} group if any, what namespace to check for the identifier
+	 */
     LNL.get = LNL.$ = function(id, group){
         if (!group) 
             group = DEFAULT_GROUP;
-        var obj;
-        try {
-            obj = Specifications[group][id];
-        } 
-        catch (e) {
-            throw e;
-        }
+        var obj = getSpec(id, group);
 		
         if (obj) {
-            switch (getType(obj)) {
-                case SPEC_TYPE.PROTOTYPE:
-					return instantiateObject(id, group);
+            switch (getLifecycle(obj)) {
+                case SPEC_LIFECYCLE.PROTOTYPE:
+					if(getType(obj) == SPEC_TYPE.FUNCTION){
+						throwError("function prototypes not supported (yet)", id, group);
+					}
+					return instantiate(id, group);
                 default:
 					return fetchFromDB(id, group);
             }

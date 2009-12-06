@@ -104,7 +104,7 @@ LNLTest.prototype.testIoCClone = function(){
 	LNL.loadJSON({
 		"celebratory_clone": {
 			"class": "Confetti",
-			type: "prototype",
+			lifecycle: "prototype",
 			props: {
 				"quantity()": 20 
 			}
@@ -130,4 +130,55 @@ LNLTest.prototype.testIoCClone = function(){
 	
 	assertEquals(30, first.getQuantity())
 	assertEquals(["Joan", "Melanie"], first.getRecipients())
+}
+
+
+
+LNLTest.prototype.testIoCFunctionClone = function(){
+	(function(){
+		var counter = 0;
+		
+		window.SweetCounter = function(){
+			return ++counter;
+		}
+	})();
+	
+	LNL.loadJSON({
+	    "counter_function": {
+	        "function": "SweetCounter",
+			lifecycle: "prototype"
+	    }
+	});
+
+	try {
+		var my_counter = LNL.$("counter_function");
+		var number = my_counter();
+		fail("instantiating a function clone should have raised error")
+	} catch(e){
+		assertEquals("LNL: counter_function: function prototypes not supported (yet)", e.message);
+	}
+}
+
+LNLTest.prototype.testIoCFunctionSingleton = function(){
+	(function(){
+		var counter = 0;
+		
+		window.SweetCounter = function(){
+			return ++counter;
+		}
+	})();
+
+	LNL.loadJSON({
+		"counter_function": {
+			"function": "SweetCounter",
+			lifecycle: "singleton"
+		}
+	});
+	
+	var my_counter = LNL.$("counter_function");
+	assertEquals(1, my_counter());
+	
+	var my_counter2 = LNL.$("counter_function");
+	assertEquals(2, my_counter2());
+	assertEquals(3, my_counter());
 }
