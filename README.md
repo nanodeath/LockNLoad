@@ -25,9 +25,9 @@ implementation that only knew how to do "b".
 How to Use
 ----------
 
-1) Load lnl.js in your application
-2) Call LNL.loadJSON(javascript_object) where javascript_object is your configuration
-3) Call LNL.get (aliased to LNL.$) to pull out implementations of objects
+1. Load lnl.js in your application
+2. Call LNL.loadConfig(javascript_object) where javascript_object is your configuration
+3. Call LNL.get (aliased to LNL.$) to pull out implementations of objects
 
 Walkthrough example
 -------------------
@@ -35,7 +35,7 @@ Walkthrough example
 Suppose you want to load a "celebratory object" and some sort of censor
 function.  Your configuration may look something like what follows.
 
-    LNL.loadJSON({
+    LNL.loadConfig({
       "celebratory_object": {
         "class": "Confetti",
         "args": [], // optional, constructor arguments
@@ -50,6 +50,9 @@ function.  Your configuration may look something like what follows.
           "args": ["_", ['darn', 'dang', 'fudge', 'phooie']] // _ arguments will be merged into this
       }
     });
+    
+    var myObject = LNL.$("celebratory_object");
+    var myFunc = LNL.$("censor_function")
 
 ### Specifying Objects
 
@@ -73,7 +76,6 @@ in a (), a method is called to set that property instead, as opposed to
 setting the property directly on the object.  Default: {}.  Domain: any
 hash.
 
-To grab an object, you can then say var myObject = LNL.$("celebratory_object").
 
 ### Specifying Functions
 
@@ -87,10 +89,8 @@ and a list of bad words to block.  Rather than having to passing in this
 list of bad words every time, you can specify that argument in the
 configuration.  With the above configuration, the "censor_function" is
 actually a function that takes one argument and calls SimpleCensor with that
-argument before a list of bad words.
-
-You can grab a function the same way you grab an object: var myFunc =
-LNL.$("censor_function").
+argument before a list of bad words. _s are placeholders for arguments in the 
+function returned to the calling code.
 
 Groups
 ------
@@ -124,9 +124,9 @@ analagous public methods) even if there's no way to actually enforce this.
 
 Design Principles
 -----------------
-1. Fast
+1. Simple
 2. Small
-3. Simple
+3. Fast
 4. No external dependencies
 5. Easy to read and write
 
@@ -148,7 +148,7 @@ Other stuff
 ### Contributing
 You are, of course, more than welcome to cut issues or fork the repo.  I'll
 gladly reincorporate your changes back into my fork, given sufficient unit
-tests have been written.  
+tests have been written and consistency with above-stated design principles.
 
 ### Tests
 For testing information, see runningTheTests.

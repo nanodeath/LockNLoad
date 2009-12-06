@@ -1,6 +1,6 @@
 /**
  * Example:
- * LNL.load({
+ * LNL.loadConfig({
  * 	"celebratory_object": {
  * 		class: "Confetti",
  * 		args: [], // optional, constructor arguments
@@ -41,7 +41,7 @@
 		ObjectDatabase = {}; 
 	}
     
-    LNL.loadJSON = function(specification, group){
+    LNL.loadConfig = function(specification, group){
         if (!group) 
             group = DEFAULT_GROUP; 
         Specifications[group] = specification;

@@ -18,7 +18,7 @@ LNLTest.prototype.setUp = function(){
 }
 
 LNLTest.prototype.testIoCFunction = function(){
-	LNL.loadJSON({
+	LNL.loadConfig({
 	    "censor_function": {
 	        "function": SimpleCensor,
 	        args: ["_", ['darn', 'dang', 'fudge', 'phooie']] // _ arguments will be merged into this
@@ -30,7 +30,7 @@ LNLTest.prototype.testIoCFunction = function(){
 }
 
 LNLTest.prototype.testIoCObject = function(){
-	LNL.loadJSON({
+	LNL.loadConfig({
 	    "celebratory_object": {
 	        "class": "Confetti",
 	        props: { // properties -- variables and methods to set
@@ -68,7 +68,7 @@ function Confetti(shape){
 }
 
 LNLTest.prototype.testIoCSingleton = function(){
-	LNL.loadJSON({
+	LNL.loadConfig({
 	    "celebratory_singleton": {
 	        "class": "Confetti",
 	        args: ['pointy'], // constructor arguments
@@ -101,7 +101,7 @@ LNLTest.prototype.testIoCSingleton = function(){
 
 
 LNLTest.prototype.testIoCClone = function(){
-	LNL.loadJSON({
+	LNL.loadConfig({
 		"celebratory_clone": {
 			"class": "Confetti",
 			lifecycle: "prototype",
@@ -143,7 +143,7 @@ LNLTest.prototype.testIoCFunctionClone = function(){
 		}
 	})();
 	
-	LNL.loadJSON({
+	LNL.loadConfig({
 	    "counter_function": {
 	        "function": "SweetCounter",
 			lifecycle: "prototype"
@@ -168,7 +168,7 @@ LNLTest.prototype.testIoCFunctionSingleton = function(){
 		}
 	})();
 
-	LNL.loadJSON({
+	LNL.loadConfig({
 		"counter_function": {
 			"function": "SweetCounter",
 			lifecycle: "singleton"
