@@ -4,7 +4,7 @@
  * 	"celebratory_object": {
  * 		class: "Confetti",
  * 		args: [], // optional, constructor arguments
- * 		type: "prototype", // singleton or prototype
+ * 		lifecycle: "prototype", // singleton or prototype
  *		props: { // properties -- variables and methods to set
  *			"color": "red", // sets your_object.color = "red"
  *			"quantity()": 20 // calls your_object.setQuantity(20) 
