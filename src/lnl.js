@@ -46,6 +46,8 @@
             group = DEFAULT_GROUP; 
         Specifications[group] = specification;
     };
+	
+	LNL.version = 0.1;
     
     var SPEC_TYPE = {
         CLASS: "class",
