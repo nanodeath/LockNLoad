@@ -3,5 +3,7 @@ You'll need the JsTestDriver.jar available here: http://code.google.com/p/js-tes
 To start the test server, on my box at least:
 java -jar ~/jars/JsTestDriver.jar --port 4224
 
+You'll then need to navigate one (or several) browsers to http://localhost:4224/
+
 To run (all) the tests, after a browser has connected:
-java -jar /home/max/jars/JsTestDriver.jar --tests all
+java -jar ~/jars/JsTestDriver.jar --tests all
