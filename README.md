@@ -112,23 +112,6 @@ Because of the way variables are passed in JS, primitives always follow the "pro
 model and objects follow the "singleton" model.  I'll soon be adding a way
 to get prototype versions of objects, however, as soon as I add deep copying...
 
-Groups
-------
-What if you want to load multiple configurations?  The current solution for
-this is to put each configuration into its own group.  An example:
-
-    var myConfig = { ... }, hisConfig = { ... };
-    LNL.loadConfig(myConfig, "group1");
-    LNL.loadConfig(hisConfig, "group2");
-
-    var myObject = LNL.$(..., "group1");
-    var hisFunc = LNL.$(..., "group2");
-
-If you load two configurations into the same group, the original
-configuration will be *overwritten*.  There is no merging logic with
-configurations.  If you really want to merge, merge the configurations
-before loading them into the container.
-
 Similarities to Spring
 ----------------------
 If you're familiar with Spring, this will seem very familiar to you.  Spring
@@ -153,17 +136,6 @@ Design Principles
 
 Design Justifications
 ---------------------
-*   Why no configuration merging?
-
-    Because if my library defines specs with ids "a" and "b", and another
-    library on the page specifies "b" and "c", it may be a while before you
-    realize that the second lib overwrote part of the first lib's configuration.
-    Whereas no configuration merging means you pretty much have to specify a
-    group/namespace to ensure you don't stomp/get stomped on by other libraries.
-    
-    I'm considering adding configuration merging later and abandoning the notion
-    of groups...
-
 *   Why can't I make my function a prototype?
 
     Because I haven't figured out how to make a copy of a function.  At this

@@ -50,10 +50,15 @@
 		ObjectDatabase = {}; 
 	}
     
-    LNL.loadConfig = function(specification, group){
-        if (!group) 
-            group = DEFAULT_GROUP; 
-        Specifications[group] = specification;
+    LNL.loadConfig = function(specification, overwrite){
+		if(overwrite !== true){
+			// TODO: add some checks in here to make sure we don't overwrite any
+			// existing specs.  We should throw an exception if we try.
+			extend(true, Specifications, specification);
+		} else {
+			extend(true, Specifications, specification);
+		}
+		
     };
 	
 	LNL.version = 0.15;
@@ -108,12 +113,12 @@
 		return ret;
 	}
 	
-	function getSpec(id, group){
+	function getSpec(id){
         try {
-            return Specifications[group][id];
+            return Specifications[id];
         } 
         catch (e) {
-			throwError("specification not found", id, group);
+			throwError("specification not found", id);
         }
 	}
 	
@@ -135,7 +140,7 @@
 				method_name = "set" + method_name.charAt(0).toUpperCase() + method_name.slice(1);
 				var method = slate[method_name];
 				if(!method){
-					throwError("does not have method " + method_name, id, group);
+					throwError("does not have method " + method_name, id);
 				}
 				var args = spec.props[setter];
 				if(!(args instanceof Array)){
@@ -151,14 +156,11 @@
 	/**
 	 * This instantiates a new object with the provided id.
 	 * @param {Object} id
-	 * @param {Object} group
 	 */
-	function instantiate(id, group){
-		if (!group) 
-            group = DEFAULT_GROUP;
+	function instantiate(id){
         var ret = null;
 		
-		var spec = getSpec(id, group);
+		var spec = getSpec(id);
 		
 		// If we found a specification for the object
         if (spec) {
@@ -197,29 +199,18 @@
 	 * the database and kept.  When requested, the same instance is always
 	 * returned.
 	 * @param {Object} id
-	 * @param {Object} group
 	 */
-    function fetchFromDB(id, group){
-        if (!group){
-            group = DEFAULT_GROUP;
-		}
+    function fetchFromDB(id){
         var obj = null;
 		
-		if(ObjectDatabase[group] == null || ObjectDatabase[group][id] == null){
-			obj = instantiate(id, group);
+		if(ObjectDatabase[id] == null){
+			obj = instantiate(id);
 			if(obj){
-				if (ObjectDatabase[group] == null) {
-					ObjectDatabase[group] = {};
-				}
-				ObjectDatabase[group][id] = obj;
+				ObjectDatabase[id] = obj;
 				return obj;
 			}
 		}
-		if(ObjectDatabase[group]){
-			return ObjectDatabase[group][id];
-		} else {
-			return null;
-		}
+		return ObjectDatabase[id];
     }
     
 	/**
@@ -227,12 +218,9 @@
 	 * Pass in the ID of the object you want, and optionally the group
 	 * associated with the object (when its specification was loaded).
 	 * @param {String} id identifier for the particular instance you want 
-	 * @param {String} group if any, what namespace to check for the identifier
 	 */
-    LNL.get = LNL.$ = function(id, group){
-        if (!group) 
-            group = DEFAULT_GROUP;
-        var spec = getSpec(id, group);
+    LNL.get = LNL.$ = function(id){
+        var spec = getSpec(id);
 		
         if (spec) {
 			var lifecycle = getLifecycle(spec);
@@ -241,7 +229,7 @@
 			// Validation of type/lifecycle combinations
 			if(type == SPEC_TYPE.VALUE){
 				if (lifecycle) {
-					throwError("value specs can't specify lifecycle.  Primitives are always 'prototype' and complex types are always 'singleton'", id, group);
+					throwError("value specs can't specify lifecycle.  Primitives are always 'prototype' and complex types are always 'singleton'", id);
 				} else {
 					var realType = typeof spec.value;
 					if(realType == func || realType == object){
@@ -251,29 +239,71 @@
 					}
 				}
 			} else if(type == SPEC_TYPE.FUNCTION && lifecycle == SPEC_LIFECYCLE.PROTOTYPE){
-				throwError("function prototypes not supported (yet)", id, group);
+				throwError("function prototypes not supported (yet)", id);
 			}
 			
             switch (lifecycle) {
                 case SPEC_LIFECYCLE.PROTOTYPE:
-					return instantiate(id, group);
+					return instantiate(id);
                 default:
-					return fetchFromDB(id, group);
+					return fetchFromDB(id);
             }
         }
     }
 	
-	function throwError(message, id, group){
+	// extend, borrowed from jQuery
+	var extend = function() {
+		// copy reference to target object
+		var target = arguments[0] || {}, i = 1, length = arguments.length, deep = false, options;
+	
+		// Handle a deep copy situation
+		if ( typeof target === "boolean" ) {
+			deep = target;
+			target = arguments[1] || {};
+			// skip the boolean and the target
+			i = 2;
+		}
+	
+		// Handle case when target is a string or something (possible in deep copy)
+		if ( typeof target !== "object" && toString.call(obj) !== "[object Function]" )
+			target = {};
+	
+		for ( ; i < length; i++ )
+			// Only deal with non-null/undefined values
+			if ( (options = arguments[ i ]) != null )
+				// Extend the base object
+				for ( var name in options ) {
+					var src = target[ name ], copy = options[ name ];
+	
+					// Prevent never-ending loop
+					if ( target === copy )
+						continue;
+	
+					// Recurse if we're merging object values
+					if ( deep && copy && typeof copy === object && !copy.nodeType )
+						target[ name ] = extend( deep, 
+							// Never move original objects, clone them
+							src || ( copy.length != null ? [ ] : { } )
+						, copy );
+	
+					// Don't bring in undefined values
+					else if ( copy !== undefined )
+						target[ name ] = copy;
+	
+				}
+	
+		// Return the modified object
+		return target;
+	};
+
+	
+	function throwError(message, id){
 		var errorMessage = ["LNL: "];
 		var spec = false;
 		if(id){
 			errorMessage.push(id);
 			spec = true;
 			
-			if(group && group != DEFAULT_GROUP){
-				errorMessage.push(" in ");
-				errorMessage.push(group);
-			}
 			errorMessage.push(": ");
 		}
 		errorMessage.push(message);
