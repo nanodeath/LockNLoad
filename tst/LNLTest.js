@@ -273,3 +273,5 @@ LNLTest.prototype.testIoCValues = function(){
 		assertTrue(!!e.message.match("value specs can't specify lifecycle"));
 	}
 }
+
+// TODO: write tests for loadConfig overwrite settings
