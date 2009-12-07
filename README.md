@@ -180,5 +180,15 @@ tests have been written and consistency with above-stated design principles.
 ### Tests
 For testing information, see runningTheTests.
 
+I try to run the unit tests regularly on the following environments:
+Linux/Firefox 3.5
+Windows/IE 8 (all modes)
+Windows/IE7
+Windows/IE6
+Windows/Opera 10
+Windows/Safari 4
+Windows/Chrome
+Windows/Firefox 3.5
+
 ### License
 This library is licensed under the MIT License.  Please see LICENSE.
