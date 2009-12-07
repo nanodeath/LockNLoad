@@ -1,3 +1,13 @@
+/*!
+ * LockNLoad - 2009 Max Aller <nanodeath@gmail.com>
+ * ---------
+ * A convenient inversion of control container
+ * 
+ * Released under the MIT license.
+ * 
+ * http://github.com/nanodeath/LockNLoad
+ * http://blog.maxaller.name/tag/locknload/
+*/
 /**
  * Example:
  * LNL.loadConfig({
@@ -46,7 +56,7 @@
         Specifications[group] = specification;
     };
 	
-	LNL.version = 0.11;
+	LNL.version = 0.15;
     
 	// this is a property of the spec object itself
     var SPEC_TYPE = {
@@ -80,17 +90,6 @@
 		}
 		return null;
 	}
-    
-    function getConstructor(cons){
-        switch (typeof(cons)) {
-            case "function":
-                return cons;
-            case "string":
-                return eval(cons);
-            default:
-                return null;
-        }
-    }
 	
 	// array1: [_, hello, _, day!], array2: [oh, good]; #=> ['oh', 'hello', 'good', 'day!']
 	function weaveArrays(array1, array2){
@@ -128,23 +127,6 @@
 		constructor.prototype.constructor.apply(slate, constructor_args);		
 	}
 	
-	function throwError(message, id, group){
-		var errorMessage = ["LNL: "];
-		var spec = false;
-		if(id){
-			errorMessage.push(id);
-			spec = true;
-			
-			if(group && group != DEFAULT_GROUP){
-				errorMessage.push(" in ");
-				errorMessage.push(group);
-			}
-			errorMessage.push(": ");
-		}
-		errorMessage.push(message);
-		throw new Error(errorMessage.join(""));
-	}
-	
 	function applyProperties(slate, spec){
 		for (var setter in spec.props) {
         	var isMethod = setter.indexOf("()") == setter.length - 2;
@@ -166,41 +148,44 @@
         }
 	}
 	
+	/**
+	 * This instantiates a new object with the provided id.
+	 * @param {Object} id
+	 * @param {Object} group
+	 */
 	function instantiate(id, group){
 		if (!group) 
             group = DEFAULT_GROUP;
         var ret = null;
 		
-		var obj = getSpec(id, group);
+		var spec = getSpec(id, group);
 		
 		// If we found a specification for the object
-        if (obj) {
+        if (spec) {
 			// And that specification is for a Class object
-            if (obj['class']) {
-                var slate = new EmptyClass();
-				
-				applyConstructor(slate, obj);
-	            applyProperties(slate, obj);
-                
-                return slate;
-            } 
-			// Specification is not for a Class, but rather a Function
-			else if (obj['function']) {
-                var func = obj['function'];
-                if (typeof(func) == "string") {
-                    func = obj['function'] = eval(func);
-                }
-				if(obj.args){
-					var orig_func = func;
-					func = function(){
-						var args = weaveArrays(obj.args, arguments);
-						return orig_func.apply(this, args);
-						
+			switch(getType(spec)){
+				case SPEC_TYPE.CLASS:
+					var slate = new EmptyClass();
+					
+					applyConstructor(slate, spec);
+		            applyProperties(slate, spec);
+	                
+	                return slate;
+				case SPEC_TYPE.FUNCTION:
+					var func = spec['function'];
+	                if (typeof(func) == "string") {
+	                    func = spec['function'] = eval(func);
+	                }
+					if(spec.args){
+						var orig_func = func;
+						func = function(){
+							var args = weaveArrays(spec.args, arguments);
+							return orig_func.apply(this, args);
+						}
 					}
-				}
-                return func;
-            } else if (obj['value']){
-				return obj['value'];
+	                return func;
+				case SPEC_TYPE.VALUE:
+					return spec['value'];
 			}
         }
 		return null;
@@ -276,5 +261,22 @@
 					return fetchFromDB(id, group);
             }
         }
-    }    
+    }
+	
+	function throwError(message, id, group){
+		var errorMessage = ["LNL: "];
+		var spec = false;
+		if(id){
+			errorMessage.push(id);
+			spec = true;
+			
+			if(group && group != DEFAULT_GROUP){
+				errorMessage.push(" in ");
+				errorMessage.push(group);
+			}
+			errorMessage.push(": ");
+		}
+		errorMessage.push(message);
+		throw new Error(errorMessage.join(""));
+	}    
 })();
