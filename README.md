@@ -48,6 +48,12 @@ function.  Your configuration may look something like what follows.
       "censor_function": {
         function: "SimpleCensor", // functions are always singletons
           "args": ["_", ['darn', 'dang', 'fudge', 'phooie']] // _ arguments will be merged into this
+      },
+      "my_integer": { // this will be a prototype
+      	value: 4
+      },
+      "my_map": { // this will be a singleton
+      	value: {foo: "bar"}
       }
     });
     
@@ -98,6 +104,13 @@ configuration.  With the above configuration, the "censor_function" is
 actually a function that takes one argument and calls SimpleCensor with that
 argument before a list of bad words. _s are placeholders for arguments in the 
 function returned to the calling code.
+
+### Specifying Values
+
+Values are plain and simple objects stuck into the internal data store for safekeeping.
+Because of the way variables are passed in JS, primitives always follow the "prototype"
+model and objects follow the "singleton" model.  I'll soon be adding a way
+to get prototype versions of objects, however, as soon as I add deep copying...
 
 Groups
 ------
