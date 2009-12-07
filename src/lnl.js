@@ -132,7 +132,7 @@
         	var isMethod = setter.indexOf("()") == setter.length - 2;
 			if(isMethod){
 				var method_name = setter.slice(0, -2);
-				method_name = "set" + method_name[0].toUpperCase() + method_name.slice(1);
+				method_name = "set" + method_name.charAt(0).toUpperCase() + method_name.slice(1);
 				var method = slate[method_name];
 				if(!method){
 					throwError("does not have method " + method_name, id, group);
