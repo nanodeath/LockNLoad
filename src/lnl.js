@@ -50,15 +50,30 @@
 		ObjectDatabase = {}; 
 	}
     
-    LNL.loadConfig = function(specification, overwrite){
-		if(overwrite !== true){
-			// TODO: add some checks in here to make sure we don't overwrite any
-			// existing specs.  We should throw an exception if we try.
-			extend(true, Specifications, specification);
-		} else {
-			extend(true, Specifications, specification);
+	LNL.OVERWRITE = {
+		ERROR: 0,
+		SKIP: 1,
+		IGNORE: 2
+	};
+	
+	/**
+	 * 
+	 * @param {Object} specification
+	 * @param {Object} overwrite_behavior options are in LNL.OVERWRITE
+	 */
+    LNL.loadConfig = function(specification, overwrite_behavior){
+		switch(overwrite_behavior){
+			case LNL.OVERWRITE.SKIP:
+				// TODO: skip nodes that already have specifications
+				extend(true, Specifications, specification);
+				break;
+			case LNL.OVERWRITE.IGNORE:
+				extend(true, Specifications, specification);
+				break;
+			default:
+				// TODO: throw errors as expected
+				extend(true, Specifications, specification);
 		}
-		
     };
 	
 	LNL.version = 0.15;
