@@ -24,14 +24,13 @@
  * censor("That darn cat!") == "That **** cat!";
  */
 (function(){
-    var window = this, undefined, _LNL, LNL = window.LNL = {};
+    var window = this, undefined, _LNL, LNL = window.LNL = {}, func = "function", object = "object";
     
     var DEFAULT_GROUP = "default";
     
     var ObjectDatabase = {};
     
     function EmptyClass(){}
-    
     
     var Specifications = {};
 
@@ -47,22 +46,25 @@
         Specifications[group] = specification;
     };
 	
-	LNL.version = 0.1;
+	LNL.version = 0.11;
     
+	// this is a property of the spec object itself
     var SPEC_TYPE = {
         CLASS: "class",
-		FUNCTION: "function"
+		FUNCTION: "function",
+		VALUE: "value"
     }
 	
+	// this is in the "lifecycle" attribute of the spec
 	var SPEC_LIFECYCLE = {
 		SINGLETON: "singleton",
 		PROTOTYPE: "prototype"
 	}
     
-    function getLifecycle(object){
+    function getLifecycle(spec){
 		for(type in SPEC_LIFECYCLE){
 			var value = SPEC_LIFECYCLE[type];
-			if(object.lifecycle == value){
+			if(spec.lifecycle == value){
 				return value;
 			}
 		}
@@ -112,7 +114,6 @@
             return Specifications[group][id];
         } 
         catch (e) {
-			throw new Error("LNL: " + group + "#" + id + " specification not found");
 			throwError("specification not found", id, group);
         }
 	}
@@ -155,10 +156,10 @@
 					throwError("does not have method " + method_name, id, group);
 				}
 				var args = spec.props[setter];
-				if(typeof(args) == "string"){
+				if(!(args instanceof Array)){
 					args = [args];
 				}
-				method.call(slate, args);
+				method.apply(slate, args);
 			} else {
 				slate[setter] = spec.props[setter];
 			}
@@ -176,13 +177,10 @@
         if (obj) {
 			// And that specification is for a Class object
             if (obj['class']) {
-                
                 var slate = new EmptyClass();
-                
+				
 				applyConstructor(slate, obj);
-                
-				// TODO refactor into an applyProperties(slate, spec) method
-                applyProperties(slate, obj);
+	            applyProperties(slate, obj);
                 
                 return slate;
             } 
@@ -201,7 +199,9 @@
 					}
 				}
                 return func;
-            }
+            } else if (obj['value']){
+				return obj['value'];
+			}
         }
 		return null;
 	}
@@ -247,19 +247,34 @@
     LNL.get = LNL.$ = function(id, group){
         if (!group) 
             group = DEFAULT_GROUP;
-        var obj = getSpec(id, group);
+        var spec = getSpec(id, group);
 		
-        if (obj) {
-            switch (getLifecycle(obj)) {
-                case SPEC_LIFECYCLE.PROTOTYPE:
-					if(getType(obj) == SPEC_TYPE.FUNCTION){
-						throwError("function prototypes not supported (yet)", id, group);
+        if (spec) {
+			var lifecycle = getLifecycle(spec);
+			var type = getType(spec);
+			
+			// Validation of type/lifecycle combinations
+			if(type == SPEC_TYPE.VALUE){
+				if (lifecycle) {
+					throwError("value specs can't specify lifecycle.  Primitives are always 'prototype' and complex types are always 'singleton'", id, group);
+				} else {
+					var realType = typeof spec.value;
+					if(realType == func || realType == object){
+						lifecycle = "singleton";
+					} else {
+						lifecycle = "prototype";
 					}
+				}
+			} else if(type == SPEC_TYPE.FUNCTION && lifecycle == SPEC_LIFECYCLE.PROTOTYPE){
+				throwError("function prototypes not supported (yet)", id, group);
+			}
+			
+            switch (lifecycle) {
+                case SPEC_LIFECYCLE.PROTOTYPE:
 					return instantiate(id, group);
                 default:
 					return fetchFromDB(id, group);
             }
         }
-    }
-    
+    }    
 })();

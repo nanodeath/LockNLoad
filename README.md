@@ -61,20 +61,27 @@ the constructor of the object.  You can specify a String or a function
 reference here -- strings will be evaluated when the object is first loaded. 
 Required.  Domain: string, function reference.
 
-Args is an optional array consisting of constructor arguments.  Default: []. 
-Domain: any array.
+Args is an array consisting of constructor arguments.  
+Optional.  Default: [].  Domain: any array.
 
 Lifecycle is an optional string specifying whether the object should be a
 singleton or a prototype.  If it's a prototype, each time you ask the IoC
 container for a "foo" object you'll get a new "foo" object, whereas if it's
 a singleton you'll get a reference to the same "foo" object each time. 
-Default: "singleton".  Domain: "singleton", "prototype".
+Optional.  Default: "singleton".  Domain: "singleton", "prototype".
 
 Props are properties you can set on instances returned from the container. 
-This is fairly straightforward, except for one caveat: if the property ends
-in a (), a method is called to set that property instead, as opposed to
-setting the property directly on the object.  Default: {}.  Domain: any
-hash.
+Caveat 1: if the property ends in a (), a method is called to set that 
+property instead, as opposed to setting the property directly on the object.
+Caveat 2: if the property ends in a (), and the value is an array, the first, 
+second, etc values in the array will be used as the first, second, etc 
+arguments to the setter.
+    "myproperty": ["foo", "bar"] // => setMyproperty("foo", "bar")
+This may be confusing if you're trying to actually pass in a array as an 
+argument.  In that case, put the array itself in an array:
+    "myvector": [[3.0, 5.0]] // => setMyvector([3.0, 5.0])
+   
+Default: {}.  Domain: any hash.
 
 
 ### Specifying Functions
@@ -129,13 +136,20 @@ Design Principles
 3. Fast
 4. No external dependencies
 5. Easy to read and write
+6. Well-tested
 
 Design Justifications
 ---------------------
 *   Why no configuration merging?
 
-    Because I didn't feel like writing or finding a deep copy algorithm, and
-    it would add to code size.
+    Because if my library defines specs with ids "a" and "b", and another
+    library on the page specifies "b" and "c", it may be a while before you
+    realize that the second lib overwrote part of the first lib's configuration.
+    Whereas no configuration merging means you pretty much have to specify a
+    group/namespace to ensure you don't stomp/get stomped on by other libraries.
+    
+    I'm considering adding configuration merging later and abandoning the notion
+    of groups...
 
 *   Why can't I make my function a prototype?
 
