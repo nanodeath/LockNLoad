@@ -64,15 +64,26 @@
     LNL.loadConfig = function(specification, overwrite_behavior){
 		switch(overwrite_behavior){
 			case LNL.OVERWRITE.SKIP:
-				// TODO: skip nodes that already have specifications
-				extend(true, Specifications, specification);
+				for(var s in specification){
+					if(!Specifications[s]){
+						Specifications[s] = specification[s];
+					}
+				}
 				break;
 			case LNL.OVERWRITE.IGNORE:
-				extend(true, Specifications, specification);
+				//extend(true, Specifications, specification);
+				for(var s in specification){
+					Specifications[s] = specification[s];
+				}
 				break;
 			default:
-				// TODO: throw errors as expected
-				extend(true, Specifications, specification);
+				for(var s in specification){
+					if(Specifications[s]){
+						throwError("id conflict, " + s + " is already defined.");
+					} else {
+						Specifications[s] = specification[s];
+					}
+				}
 		}
     };
 	
@@ -170,11 +181,10 @@
 	
 	/**
 	 * This instantiates a new object with the provided id.
-	 * @param {Object} id
+	 * @param {String} id
+	 * @return A new object, function, or primitive
 	 */
 	function instantiate(id){
-        var ret = null;
-		
 		var spec = getSpec(id);
 		
 		// If we found a specification for the object
@@ -213,7 +223,7 @@
 	 * object database.  One instance of the object is acquired and put into
 	 * the database and kept.  When requested, the same instance is always
 	 * returned.
-	 * @param {Object} id
+	 * @param {String} id
 	 */
     function fetchFromDB(id){
         var obj = null;
@@ -266,52 +276,12 @@
         }
     }
 	
-	// extend, borrowed from jQuery
-	var extend = function() {
-		// copy reference to target object
-		var target = arguments[0] || {}, i = 1, length = arguments.length, deep = false, options;
-	
-		// Handle a deep copy situation
-		if ( typeof target === "boolean" ) {
-			deep = target;
-			target = arguments[1] || {};
-			// skip the boolean and the target
-			i = 2;
-		}
-	
-		// Handle case when target is a string or something (possible in deep copy)
-		if ( typeof target !== "object" && toString.call(obj) !== "[object Function]" )
-			target = {};
-	
-		for ( ; i < length; i++ )
-			// Only deal with non-null/undefined values
-			if ( (options = arguments[ i ]) != null )
-				// Extend the base object
-				for ( var name in options ) {
-					var src = target[ name ], copy = options[ name ];
-	
-					// Prevent never-ending loop
-					if ( target === copy )
-						continue;
-	
-					// Recurse if we're merging object values
-					if ( deep && copy && typeof copy === object && !copy.nodeType )
-						target[ name ] = extend( deep, 
-							// Never move original objects, clone them
-							src || ( copy.length != null ? [ ] : { } )
-						, copy );
-	
-					// Don't bring in undefined values
-					else if ( copy !== undefined )
-						target[ name ] = copy;
-	
-				}
-	
-		// Return the modified object
-		return target;
-	};
-
-	
+	/**
+	 * Error-throwing convenience method
+	 * @param {String} message Text to propagate in the exception
+	 * @param {String} id the offending spec, if applicable
+     * @exception Error 
+	 */
 	function throwError(message, id){
 		var errorMessage = ["LNL: "];
 		var spec = false;

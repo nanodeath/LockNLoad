@@ -112,6 +112,35 @@ Because of the way variables are passed in JS, primitives always follow the "pro
 model and objects follow the "singleton" model.  I'll soon be adding a way
 to get prototype versions of objects, however, as soon as I add deep copying...
 
+Loading Multiple Configurations
+-------------------------------
+It is conceivable that you may want to call loadConfig multiple times, but then,
+what happens when there's an id conflict, when a later config attempts to overwrite
+an earlier one?  There are three options:
+
+### Throw an error (LNL.OVERWRITE.ERROR)
+
+The default is to throw an error whenever you try to do this.  This is to prevent 
+accidental overwrites.
+
+### Ignore the old value and overwrite it (LNL.OVERWRITE.IGNORE)
+
+Alternatively, if you're fine with overwriting the old data, you can specify IGNORE.
+Any conflicts will be resolved in favor of the config being loaded.
+
+### Skip any values already present (LNL.OVERWRITE.SKIP)
+
+Lastly, you can choose to leave existing configs alone -- letting later configs "fill 
+in the gaps", so to speak.  Nothing will be overwritten in this mode.
+
+### Using a mode
+
+To use a non-default mode, say simply
+
+   LNL.loadConfig(myConfig, LNL.OVERWRITE.IGNORE);
+   
+or something to that effect.
+
 Similarities to Spring
 ----------------------
 If you're familiar with Spring, this will seem very familiar to you.  Spring
