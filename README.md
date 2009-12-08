@@ -137,7 +137,7 @@ in the gaps", so to speak.  Nothing will be overwritten in this mode.
 
 To use a non-default mode, say simply
 
-   LNL.loadConfig(myConfig, LNL.OVERWRITE.IGNORE);
+    LNL.loadConfig(myConfig, LNL.OVERWRITE.IGNORE);
    
 or something to that effect.
 

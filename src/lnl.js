@@ -87,7 +87,7 @@
 		}
     };
 	
-	LNL.version = 0.15;
+	LNL.version = 0.2;
     
 	// this is a property of the spec object itself
     var SPEC_TYPE = {
@@ -212,7 +212,12 @@
 					}
 	                return func;
 				case SPEC_TYPE.VALUE:
-					return spec['value'];
+					var value = spec['value'];
+					if(typeof value == object){
+						return extend(true, {}, value);
+					} else {
+						return spec['value'];
+					}
 			}
         }
 		return null;
@@ -252,16 +257,17 @@
 			var type = getType(spec);
 			
 			// Validation of type/lifecycle combinations
+			var realType = typeof spec.value;
 			if(type == SPEC_TYPE.VALUE){
-				if (lifecycle) {
-					throwError("value specs can't specify lifecycle.  Primitives are always 'prototype' and complex types are always 'singleton'", id);
-				} else {
-					var realType = typeof spec.value;
-					if(realType == func || realType == object){
-						lifecycle = "singleton";
-					} else {
-						lifecycle = "prototype";
+				if(realType == func){
+					throwError("You passed a function in as a value spec.  Perhaps you want a function spec instead?");
+				}
+				
+				if(realType != object) {
+					if (lifecycle) {
+						throwError("Non-object value specs can't specify a lifecycle -- they're always prototype.", id);
 					}
+					lifecycle = "prototype";
 				}
 			} else if(type == SPEC_TYPE.FUNCTION && lifecycle == SPEC_LIFECYCLE.PROTOTYPE){
 				throwError("function prototypes not supported (yet)", id);
@@ -275,6 +281,52 @@
             }
         }
     }
+	
+	// extend, borrowed from jQuery
+	var extend = function() {
+		// copy reference to target object
+		var target = arguments[0] || {}, i = 1, length = arguments.length, deep = false, options;
+	
+		// Handle a deep copy situation
+		if ( typeof target === "boolean" ) {
+			deep = target;
+			target = arguments[1] || {};
+			// skip the boolean and the target
+			i = 2;
+		}
+	
+		// Handle case when target is a string or something (possible in deep copy)
+		if ( typeof target !== "object" && toString.call(obj) !== "[object Function]" )
+			target = {};
+	
+		for ( ; i < length; i++ )
+			// Only deal with non-null/undefined values
+			if ( (options = arguments[ i ]) != null )
+				// Extend the base object
+				for ( var name in options ) {
+					var src = target[ name ], copy = options[ name ];
+	
+					// Prevent never-ending loop
+					if ( target === copy )
+						continue;
+	
+					// Recurse if we're merging object values
+					if ( deep && copy && typeof copy === object && !copy.nodeType )
+						target[ name ] = extend( deep, 
+							// Never move original objects, clone them
+							src || ( copy.length != null ? [ ] : { } )
+						, copy );
+	
+					// Don't bring in undefined values
+					else if ( copy !== undefined )
+						target[ name ] = copy;
+	
+				}
+	
+		// Return the modified object
+		return target;
+	};
+
 	
 	/**
 	 * Error-throwing convenience method

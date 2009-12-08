@@ -241,12 +241,12 @@ LNLTest.prototype.testIoCValues = function(){
 				"height": "tall"
 			}
 		},
-		"unlucky_map": {
+		"proto_map": {
 			value: {
-				"color": "blue",
-				"height": "tall"
+				"color": "green",
+				"height": "short"
 			},
-			lifecycle: "prototype" // can't do this!
+			lifecycle: "prototype"
 		}
 	});
 	
@@ -258,20 +258,18 @@ LNLTest.prototype.testIoCValues = function(){
 	assertEquals(8, number2);
 	assertEquals(7, number);
 	
-	// complex types are singletons
+	// complex types can be singletons
 	var map = LNL.$("lucky_map");
 	assertEquals("blue", map.color);
 	var map2 = LNL.$("lucky_map");
 	map2.color = "red";
 	assertEquals("red", map.color)
 	
-	try {
-		var proto_map = LNL.$("unlucky_map");
-		fail("prototype maps shouldn't work");
-	} 
-	catch (e) {
-		assertTrue(!!e.message.match("value specs can't specify lifecycle"));
-	}
+	// ...or prototypes
+	var proto_map1 = LNL.$("proto_map");
+	assertEquals("green", proto_map1.color);
+	var proto_map2 = LNL.$("proto_map");
+	proto_map2.color = "yellow";
+	assertEquals("green", proto_map1.color);
+	assertEquals("yellow", proto_map2.color);
 }
-
-// TODO: write tests for loadConfig overwrite settings
